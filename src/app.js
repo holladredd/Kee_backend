@@ -29,8 +29,9 @@ app.use('/api/v1', apiRouter);
 // Root greeting
 app.get('/', (req, res) => {
   res.json({
-    message: 'Welcome to Kee Backend API',
-    description: 'Android-first personal memory and task assistant API',
+    message: 'Welcome to Kee (Knowledge Extension Entity) Backend API',
+    tagline: 'Your memory. Extended.',
+    description: 'Personal AI memory and intelligence assistant API',
     version: '1.0.0',
     endpoints: '/api/v1/health',
   });

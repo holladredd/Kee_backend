@@ -1,6 +1,17 @@
-# Kee Backend API
+# Kee Backend API — Knowledge Extension Entity
 
-Backend REST API for **Kee** — the Android-first personal memory and task assistant.
+> **Your memory. Extended.**
+
+Backend REST API for **Kee** (K.E.E. · Knowledge Extension Entity) — the personal AI memory and intelligence assistant.
+
+## Brand Identity
+
+- **Name:** Kee
+- **Full Identity:** K.E.E.
+- **Meaning:** Knowledge Extension Entity
+- **Tagline:** Your memory. Extended.
+
+*"Meet Kee, your Knowledge Extension Entity. A personal intelligence that helps you capture what matters, remember what you forget, and retrieve information whenever you need it."*
 
 ## Features
 - **Authentication**: JWT-based session management with bcrypt password hashing and rate limiting.
