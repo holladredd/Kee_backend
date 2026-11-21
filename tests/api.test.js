@@ -1,20 +1,64 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { generateToken } from '../src/middlewares/auth.js';
+import bcrypt from 'bcryptjs';
+import { generateToken, authenticate } from '../src/middlewares/auth.js';
 import {
   registerSchema,
+  loginSchema,
   memoryCreateSchema,
   taskCreateSchema,
   reminderCreateSchema,
 } from '../src/validators/schemas.js';
 
 describe('Kee Backend Unit Tests', () => {
+  describe('Password Hashing with bcrypt', () => {
+    test('hashes password and verifies match correctly', async () => {
+      const password = 'SuperSecretPassword123!';
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(password, salt);
+
+      assert.notStrictEqual(password, hash);
+      assert.ok(await bcrypt.compare(password, hash));
+      assert.strictEqual(await bcrypt.compare('WrongPassword', hash), false);
+    });
+  });
+
   describe('JWT Authentication Middleware', () => {
     test('generates a valid signed JWT token', () => {
       const payload = { userId: '123e4567-e89b-12d3-a456-426614174000', email: 'test@kee.app' };
       const token = generateToken(payload);
       assert.ok(typeof token === 'string');
       assert.ok(token.split('.').length === 3);
+    });
+
+    test('authenticates valid token and attaches user to request', () => {
+      const payload = { userId: '123e4567-e89b-12d3-a456-426614174000', email: 'test@kee.app' };
+      const token = generateToken(payload);
+
+      const req = { headers: { authorization: `Bearer ${token}` } };
+      let nextCalled = false;
+      const res = {};
+      const next = () => { nextCalled = true; };
+
+      authenticate(req, res, next);
+      assert.ok(nextCalled);
+      assert.strictEqual(req.user.id, payload.userId);
+      assert.strictEqual(req.user.email, payload.email);
+    });
+
+    test('rejects missing or invalid Bearer token with 401', () => {
+      const req = { headers: {} };
+      let statusSent = null;
+      let jsonSent = null;
+      const res = {
+        status(code) { statusSent = code; return this; },
+        json(data) { jsonSent = data; return this; },
+      };
+      const next = () => {};
+
+      authenticate(req, res, next);
+      assert.strictEqual(statusSent, 401);
+      assert.strictEqual(jsonSent.success, false);
     });
   });
 
