@@ -9,17 +9,16 @@ datasource db {
 }
 
 model User {
-  id            String       @id @default(uuid()) @db.Uuid
-  email         String       @unique
-  passwordHash  String       @map("password_hash")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-
-  memories      Memory[]
-  tasks         Task[]
-  reminders     Reminder[]
-  attachments   Attachment[]
-  syncLogs      SyncLog[]
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  attachments  Attachment[]
+  memories     Memory[]
+  reminders    Reminder[]
+  syncLogs     SyncLog[]
+  tasks        Task[]
 
   @@map("users")
 }
@@ -28,8 +27,8 @@ model Memory {
   id               String       @id @default(uuid()) @db.Uuid
   userId           String       @map("user_id") @db.Uuid
   title            String
-  originalContent  String       @map("original_content") @db.Text
-  processedContent String?      @map("processed_content") @db.Text
+  originalContent  String       @map("original_content")
+  processedContent String?      @map("processed_content")
   memoryType       String       @default("general_note") @map("memory_type")
   category         String       @default("General")
   tags             String[]     @default([])
@@ -39,11 +38,10 @@ model Memory {
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
   deletedAt        DateTime?    @map("deleted_at")
-
-  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks            Task[]
-  reminders        Reminder[]
   attachments      Attachment[]
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders        Reminder[]
+  tasks            Task[]
 
   @@index([userId])
   @@index([userId, category])
@@ -58,19 +56,18 @@ model Task {
   userId      String       @map("user_id") @db.Uuid
   memoryId    String?      @map("memory_id") @db.Uuid
   title       String
-  description String?      @db.Text
-  priority    String       @default("normal") // low, normal, high, urgent
-  status      String       @default("pending") // pending, in_progress, completed, cancelled
+  description String?
+  priority    String       @default("normal")
+  status      String       @default("pending")
   dueDate     DateTime?    @map("due_date")
   dueTime     String?      @map("due_time")
   completedAt DateTime?    @map("completed_at")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
-
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  memory      Memory?      @relation(fields: [memoryId], references: [id], onDelete: SetNull)
-  reminders   Reminder[]
   attachments Attachment[]
+  reminders   Reminder[]
+  memory      Memory?      @relation(fields: [memoryId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, status])
@@ -80,21 +77,20 @@ model Task {
 }
 
 model Reminder {
-  id             String    @id @default(uuid()) @db.Uuid
-  userId         String    @map("user_id") @db.Uuid
-  taskId         String?   @map("task_id") @db.Uuid
-  memoryId       String?   @map("memory_id") @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  taskId         String?  @map("task_id") @db.Uuid
+  memoryId       String?  @map("memory_id") @db.Uuid
   title          String
-  scheduledAt    DateTime  @map("scheduled_at")
-  timezone       String    @default("UTC")
-  recurrenceRule String?   @map("recurrence_rule") // daily, weekly, monthly, yearly, custom:INTERVAL
-  isEnabled      Boolean   @default(true) @map("is_enabled")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  task           Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  memory         Memory?   @relation(fields: [memoryId], references: [id], onDelete: SetNull)
+  scheduledAt    DateTime @map("scheduled_at")
+  timezone       String   @default("UTC")
+  recurrenceRule String?  @map("recurrence_rule")
+  isEnabled      Boolean  @default(true) @map("is_enabled")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  memory         Memory?  @relation(fields: [memoryId], references: [id])
+  task           Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, scheduledAt])
@@ -114,10 +110,9 @@ model Attachment {
   localReference  String   @map("local_reference")
   remoteReference String?  @map("remote_reference")
   createdAt       DateTime @default(now()) @map("created_at")
-
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   memory          Memory?  @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   task            Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([memoryId])
@@ -128,12 +123,11 @@ model Attachment {
 model SyncLog {
   id              String   @id @default(uuid()) @db.Uuid
   userId          String   @map("user_id") @db.Uuid
-  entityType      String   @map("entity_type") // memory, task, reminder, attachment
+  entityType      String   @map("entity_type")
   entityId        String   @map("entity_id") @db.Uuid
-  action          String   // create, update, delete
+  action          String
   clientTimestamp DateTime @map("client_timestamp")
   serverTimestamp DateTime @default(now()) @map("server_timestamp")
-
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, serverTimestamp])
